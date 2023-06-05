@@ -1,0 +1,20 @@
+FONT: Courier New * 25
+# fps
+#
+sort
+length
+
+delay
+vtime
+stime
+
+comps
+swaps
+revs
+recursions
+depth
+
+wmain
+waux
+auxlen
+segments
