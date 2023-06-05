@@ -1,6 +1,7 @@
 *.class
 bin
 dist
+!dist/build.xml
 __pycache__
 cache
 antiqsort_*
