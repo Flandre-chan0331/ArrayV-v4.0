@@ -1,4 +1,4 @@
-package sorts.misc;
+package sorts.bogo;
 
 import main.ArrayVisualizer;
 import sorts.templates.BogoSorting;
