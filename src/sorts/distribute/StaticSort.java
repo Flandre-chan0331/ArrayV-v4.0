@@ -73,7 +73,7 @@ final public class StaticSort extends Sort {
 
         float CONST = (float) auxLen / (minMax[1] - minMax[0] + 4);
 
-        System.out.println(CONST);
+        //System.out.println(CONST);
 
         int idx;
         for (int i = a; i < b; i++) {

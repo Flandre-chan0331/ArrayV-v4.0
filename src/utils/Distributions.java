@@ -224,7 +224,7 @@ public enum Distributions {
 
             int[] perlinNoise = new int[currentLen];
 
-            float step = 1f / currentLen;
+            float step = 1f / Math.min(currentLen, 3072);
             float randomStart = (float) (random.nextInt(currentLen));
             int octave = (int) (Math.log(currentLen) / Math.log(2));
 
@@ -396,7 +396,7 @@ public enum Distributions {
             this.cantor(array, t2, b, mid+1, max);
         }
     },
-    DIVISORS {//O(n^1.5)
+    DIVISORS {//O(n log n)
         public String getName() {
             return "Sum of Divisors";
         }
@@ -405,12 +405,13 @@ public enum Distributions {
             int currentLen = ArrayVisualizer.getCurrentLength();
             int[] n = new int[currentLen];
 
-            n[0] = 0;
-            n[1] = 1;
+            for (int i = 0; i < currentLen; i++) n[i] = 0;
             double max = 1;
-
-            for (int i = 2; i < currentLen; i++) {
-                n[i] = sumDivisors(i);
+            
+            for (int i = 1; i <= currentLen - 1; i++) {
+                for (int j = i; j <= currentLen - 1; j += i) {
+                    n[j] += i;
+                }
                 if (n[i] > max) max = n[i];
             }
 
@@ -419,21 +420,10 @@ public enum Distributions {
                 array[i] = (int)(n[i]*scale);
             }
         }
-
-        public int sumDivisors(int n) {
-            int sum = n+1;
-            for (int i = 2; i <= (int)Math.sqrt(n); i++) {
-                if (n % i == 0) {
-                    if (i == n/i) sum += i;
-                    else          sum += i + n/i;
-                }
-            }
-            return sum;
-        }
     },
     FSD {// fly straight dangit (OEIS A133058)
         public String getName() {
-            return "Fly Straight, Damnit!";
+            return "Fly Straight, Dammit!";
         }
         @Override
         public void initializeArray(int[] array, ArrayVisualizer ArrayVisualizer) {
@@ -546,27 +536,38 @@ public enum Distributions {
         private int[] refarray;
         private int length;
         public String getName() {
-            return "Custom";
+            return "Custom...";
         }
         @Override
-        public void selectDistribution(int[] array, ArrayVisualizer ArrayVisualizer) {
+        public boolean selectDistribution(int[] array, ArrayVisualizer ArrayVisualizer) {
             LoadCustomDistributionDialog dialog = new LoadCustomDistributionDialog();
             File file = dialog.getFile();
+            if (file == null)
+                return false;
             Scanner scanner;
             try {
                 scanner = new Scanner(file);
             } catch (FileNotFoundException e) {
-                JErrorPane.invokeErrorMessage(e);
-                return;
+                JErrorPane.invokeCustomErrorMessage("File not found: " + e.getMessage());
+                return false;
             }
-            scanner.useDelimiter("\\s+");
-            this.refarray = new int[ArrayVisualizer.getMaximumLength()];
-            int current = 0;
-            while (scanner.hasNext()) {
-                this.refarray[current++] = Integer.parseInt(scanner.next());
+            try {
+                scanner.useDelimiter("\\s+");
+                this.refarray = new int[ArrayVisualizer.getMaximumLength()];
+                int current = 0;
+                while (scanner.hasNext()) {
+                    // This gives better error messages than scanner.nextInt()
+                    this.refarray[current++] = Integer.parseInt(scanner.next());
+                }
+                this.length = current;
+
+                return true;
+            } catch (NumberFormatException e) {
+                JErrorPane.invokeCustomErrorMessage("Malformed custom sequence: " + e.getMessage());
+                return false;
+            } finally {
+                scanner.close();
             }
-            this.length = current;
-            scanner.close();
         }
         @Override
         public void initializeArray(int[] array, ArrayVisualizer ArrayVisualizer) {
@@ -579,7 +580,8 @@ public enum Distributions {
     };
 
     public abstract String getName();
-    public void selectDistribution(int[] array, ArrayVisualizer ArrayVisualizer) {
+    public boolean selectDistribution(int[] array, ArrayVisualizer ArrayVisualizer) {
+        return true;
     }
     public abstract void initializeArray(int[] array, ArrayVisualizer ArrayVisualizer);
 }

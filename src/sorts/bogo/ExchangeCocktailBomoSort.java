@@ -30,7 +30,7 @@ public final class ExchangeCocktailBomoSort extends BogoSorting {
         this.setRadixSort(false);
         this.setUnreasonablySlow(true);
         this.setUnreasonableLimit(8192);
-        this.setBogoSort(false);
+        this.setBogoSort(true);
     }
     
     public void pull(int[] array, int a, int b) {

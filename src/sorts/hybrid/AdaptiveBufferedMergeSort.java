@@ -84,22 +84,16 @@ public final class AdaptiveBufferedMergeSort extends Sort {
 
     protected int leftExpSearch(int[] array, int a, int b, int val, boolean left) {
         int i = 1;
-        if (left)
-            while (a - 1 + i < b && Reads.compareValues(val, array[a - 1 + i]) > 0) i *= 2;
-        else
-            while (a - 1 + i < b && Reads.compareValues(val, array[a - 1 + i]) >= 0) i *= 2;
-        int a1 = a + i / 2, b1 = Math.min(b, a - 1 + i);
-        return binSearch(array, a1, b1, val, left);
+        if (left) while (a - 1 + i < b && Reads.compareValues(val, array[a - 1 + i]) > 0) i *= 2;
+        else while (a - 1 + i < b && Reads.compareValues(val, array[a - 1 + i]) >= 0) i *= 2;
+        return binSearch(array, a + i / 2, Math.min(b, a - 1 + i), val, left);
     }
 
     protected int rightExpSearch(int[] array, int a, int b, int val, boolean left) {
         int i = 1;
-        if (left)
-            while (b - i >= a && Reads.compareValues(val, array[b - i]) <= 0) i *= 2;
-        else
-            while (b - i >= a && Reads.compareValues(val, array[b - i]) < 0) i *= 2;
-        int a1 = Math.max(a, b - i + 1), b1 = b - i / 2;
-        return binSearch(array, a1, b1, val, left);
+        if (left) while (b - i >= a && Reads.compareValues(val, array[b - i]) <= 0) i *= 2;
+        else while (b - i >= a && Reads.compareValues(val, array[b - i]) < 0) i *= 2;
+        return binSearch(array, Math.max(a, b - i + 1), b - i / 2, val, left);
     }
     
     protected void mergeFW(int[] array, int a, int m, int b, int p) {
@@ -174,12 +168,7 @@ public final class AdaptiveBufferedMergeSort extends Sort {
             rotate(array, a, m, b);
             return;
         }
-        if (Math.min(m - a, b - m) <= 8) {
-            if (m - a > b - m)
-                inPlaceMergeBW(array, a, m, b);
-            else
-                inPlaceMergeFW(array, a, m, b);
-        } else if (b - m < m - a)
+        if (b - m < m - a)
             mergeBW(array, a, m, b, p);
         else
             mergeFW(array, a, m, b, p);

@@ -5,7 +5,7 @@ import sorts.templates.Sort;
 
 /*
 
-Coded for ArrayV by Ayako-chan
+Coded for ArrayV by Haruki
 in collaboration with aphitorite and Gaming32
 
 +---------------------------+
@@ -15,12 +15,12 @@ in collaboration with aphitorite and Gaming32
  */
 
 /**
- * @author Ayako-chan
+ * @author Haruki (Ayako-chan)
  * @author aphitorite
  * @author Gaming32
  *
  */
-public final class RaikoSort extends Sort {
+public class RaikoSort extends Sort {
 
     public RaikoSort(ArrayVisualizer arrayVisualizer) {
         super(arrayVisualizer);
@@ -35,7 +35,7 @@ public final class RaikoSort extends Sort {
         this.setUnreasonableLimit(0);
         this.setBogoSort(false);
     }
-    
+
     protected boolean keyLessThan(int[] src, int[] pa, int a, int b) {
         int cmp = Reads.compareValues(src[pa[a]], src[pa[b]]);
         return cmp < 0 || (cmp == 0 && Reads.compareOriginalValues(a, b) < 0);
@@ -48,8 +48,7 @@ public final class RaikoSort extends Sort {
             if(this.keyLessThan(src, pa, heap[min], t)) {
                 Writes.write(heap, r, heap[min], 0.25, true, true);
                 r = min;
-            }
-            else break;
+            } else break;
         }
         int min = 2*r+1;
         if(min < size && this.keyLessThan(src, pa, heap[min], t)) {
@@ -78,19 +77,16 @@ public final class RaikoSort extends Sort {
 
     protected int findRun(int[] array, int a, int b) {
         int i = a + 1;
-        boolean dir;
-        if (i < b) dir = Reads.compareIndices(array, i - 1, i++, 0.5, true) <= 0;
-        else dir = true;
+        if (i >= b) return i;
+        boolean dir = Reads.compareIndices(array, i - 1, i++, 0.5, true) <= 0;
         while (i < b) {
-            if (dir ^ Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0)
-                break;
+            if (dir ^ Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0) break;
             i++;
         }
-        if (!dir)
-            if (i - a < 4)
-                Writes.swap(array, a, i - 1, 1.0, true, false);
-            else
-                Writes.reversal(array, a, i - 1, 1.0, true, false);
+        if (!dir) {
+            if (i - a < 4) Writes.swap(array, a, i - 1, 1.0, true, false);
+            else Writes.reversal(array, a, i - 1, 1.0, true, false);
+        }
         Highlights.clearMark(2);
         return i;
     }
@@ -104,6 +100,7 @@ public final class RaikoSort extends Sort {
             Writes.write(runs, rf++, r, 0.5, false, true);
             r = findRun(array, r, b);
         }
+        Writes.write(runs, rf, b, 0.5, false, true);
         int[] buf = Writes.createExternalArray(len);
         int alloc = 0;
         if (rf > 1) {
@@ -112,15 +109,16 @@ public final class RaikoSort extends Sort {
             int[] heap = new int[rf];
             alloc = 3 * rf;
             Writes.changeAllocAmount(alloc);
-            Writes.arraycopy(runs, 0, pa, 0, rf, 0, false, true);
-            Writes.arraycopy(pa, 1, pb, 0, rf - 1, 0, false, true);
-            Writes.write(pb, rf - 1, b, 0, false, true);
+            for (int i = 0; i < rf; i++) {
+                Writes.write(pa, i, runs[i], 0, false, true);
+                Writes.write(pb, i, runs[i + 1], 0, false, true);
+            }
+            Writes.deleteExternalArray(runs);
             kWayMerge(array, buf, heap, pa, pb, rf, true);
             Highlights.clearAllMarks();
             Writes.arraycopy(buf, 0, array, a, len, 1, true, false);
-        }
+        } else Writes.deleteExternalArray(runs);
         Writes.deleteExternalArray(buf);
-        Writes.deleteExternalArray(runs);
         Writes.changeAllocAmount(-alloc);
     }
 

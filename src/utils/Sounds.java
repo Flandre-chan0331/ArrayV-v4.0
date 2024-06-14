@@ -180,7 +180,8 @@ public final class Sounds {
                     int playNoteCount = Math.max(noteCount, 1);
                     int currentLen = ArrayVisualizer.getCurrentLength();
 
-                    for (int i : Highlights.highlightList()) {
+                    for(int j = 0; j <= Highlights.getMaxHighlight(); j++) {
+                        int i = Highlights.highlightList()[j];
                         try {
                             if (i != -1) {
                                 if (!ALLOW_PERCUSSION_SOUNDS && channel == 9) {
@@ -188,12 +189,18 @@ public final class Sounds {
                                     playNoteCount++;
                                 }
 
-                                //PITCH
-                                double pitch = Sounds.this.array[Math.min(Math.max(i, 0), currentLen - 1)] / (double) currentLen * (PITCHMAX - PITCHMIN) + PITCHMIN;
+                                // PITCH
+                                double pitch = Sounds.this.array[Math.min(Math.max(i, 0), currentLen - 1)]
+                                        / (double) currentLen * (PITCHMAX - PITCHMIN) + PITCHMIN;
+                                /*
+                                double pitch = Math.min(Math.max(i, 0), currentLen - 1) / (double) currentLen
+                                        * (PITCHMAX - PITCHMIN) + PITCHMIN;
+                                 */
                                 int pitchmajor = (int) pitch;
-                                int pitchminor = (int)((pitch-((int)pitch))*8192d)+8192;
+                                int pitchminor = (int) ((pitch - ((int) pitch)) * 8192d) + 8192;
 
-                                int vel = (int) (Math.pow(PITCHMAX - pitchmajor, 2d) * (Math.pow(noteCount, -0.25)) * 64d * SOUNDMUL) / 2; //I'VE SOLVED IT!!
+                                int vel = (int) (Math.pow(PITCHMAX - pitchmajor, 2d) * (Math.pow(noteCount, -0.25))
+                                        * 64d * SOUNDMUL) / 2; // I'VE SOLVED IT!!
 
                                 if (SOUNDMUL >= 1 && vel < 256) {
                                     vel *= vel;

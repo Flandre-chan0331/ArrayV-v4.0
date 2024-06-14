@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.swing.GroupLayout;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -72,12 +73,13 @@ final public class ShuffleDialog extends javax.swing.JDialog implements AppFrame
     private static final long serialVersionUID = 1L;
 
     private ArrayManager ArrayManager;
-    private JFrame Frame;
-    private UtilFrame UtilFrame;
+    //private JFrame Frame;
+    //private UtilFrame UtilFrame;
     private List<Distributions> distributions;
     private static boolean perShuffleDelay = false;
 
     private boolean bypassEvents;
+    private int jList4PrevSelection;
 
     /**
      * Creates new form SortPrompt
@@ -87,13 +89,14 @@ final public class ShuffleDialog extends javax.swing.JDialog implements AppFrame
         super(frame, "ArrayV Advanced Shuffle Editor", true);
 
         this.ArrayManager = ArrayManager;
-        this.Frame = frame;
-        this.UtilFrame = utilFrame;
+        //this.Frame = frame;
+        //this.UtilFrame = utilFrame;
 
         initComponents();
 
         bypassEvents = true;
         this.shuffleEditor.graph = ArrayManager.getShuffle();
+        jList4.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jList4.setListData(ArrayManager.getDistributionIDs());
         for (int i = 0; i < ArrayManager.getDistributions().length; i++) {
             if (ArrayManager.getDistribution().equals(ArrayManager.getDistributions()[i])) {
@@ -103,15 +106,17 @@ final public class ShuffleDialog extends javax.swing.JDialog implements AppFrame
         }
 
         distributions = Arrays.stream(ArrayManager.getDistributions())
-                              .filter(dist -> dist.getName() != "Custom")
+                              .filter(dist -> dist != Distributions.CUSTOM)
                               .collect(Collectors.toList());
         Object[] distributionNames = distributions.stream()
                                                   .map(Distributions::getName)
                                                   .collect(Collectors.toList())
                                                   .toArray();
+        jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jList1.setListData(distributionNames);
+        jList3.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jList3.setListData(distributionNames);
-
+        jList2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jList2.setListData(ArrayManager.getShuffleIDs());
 
         jTextField1.setText(Double.toString(
@@ -427,16 +432,25 @@ final public class ShuffleDialog extends javax.swing.JDialog implements AppFrame
     }
 
     private void jList4ValueChanged(javax.swing.event.ListSelectionEvent evt) throws Exception {//GEN-FIRST:event_jList1ValueChanged
-        if (bypassEvents)
+        if (bypassEvents || jList4.getValueIsAdjusting())
             return;
         int selection = jList4.getSelectedIndex();
         Distributions[] distributions = ArrayManager.getDistributions();
         if (selection >= 0 && selection < distributions.length)
-            ArrayManager.setDistribution(distributions[selection]);
+            if (selection >= 0 && selection < distributions.length) {
+                if (ArrayManager.setDistribution(distributions[selection])) {
+                    jList4PrevSelection = selection;
+                } else {
+                    // Selection failed for whatever reason. Need to revert to the previous selection.
+                    bypassEvents = true;
+                    jList4.setSelectedIndex(jList4PrevSelection);
+                    bypassEvents = false;
+                }
+            }
     }//GEN-LAST:event_jList1ValueChanged
 
     private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) throws Exception {//GEN-FIRST:event_jList1ValueChanged
-        if (bypassEvents)
+        if (bypassEvents || jList1.getValueIsAdjusting())
             return;
         String selection = (String)jList1.getSelectedValue();
         Distributions distribution = distributions.stream()
@@ -452,7 +466,7 @@ final public class ShuffleDialog extends javax.swing.JDialog implements AppFrame
     }//GEN-LAST:event_jList1ValueChanged
 
     private void jList3ValueChanged(javax.swing.event.ListSelectionEvent evt) throws Exception {//GEN-FIRST:event_jList1ValueChanged
-        if (bypassEvents)
+        if (bypassEvents || jList3.getValueIsAdjusting())
             return;
         String selection = (String)jList3.getSelectedValue();
         Distributions distribution = distributions.stream()
@@ -468,7 +482,7 @@ final public class ShuffleDialog extends javax.swing.JDialog implements AppFrame
     }//GEN-LAST:event_jList1ValueChanged
 
     private void jList2ValueChanged(javax.swing.event.ListSelectionEvent evt) throws Exception {//GEN-FIRST:event_jList1ValueChanged
-        if (bypassEvents)
+        if (bypassEvents || jList2.getValueIsAdjusting())
             return;
         int selection = jList2.getSelectedIndex();
         Shuffles[] shuffles = ArrayManager.getShuffles();

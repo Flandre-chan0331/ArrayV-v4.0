@@ -179,8 +179,7 @@ public final class TernarySingularityQuickSort extends Sort {
             int t = i - m;
             m = i;
             a += t + 1;
-            if (a >= m)
-                break;
+            if (m >= b) break;
             a = expSearch(array, a, m, array[m], true, false);
         }
     }
@@ -192,21 +191,18 @@ public final class TernarySingularityQuickSort extends Sort {
             int t = m - i;
             m = i;
             b -= t + 1;
-            if (m <= a)
-                break;
+            if (m <= a) break;
             b = expSearch(array, m, b, array[m - 1], false, true);
         }
     }
     
     protected void merge(int[] array, int a, int m, int b) {
-        if (a >= m || m >= b)
-            return;
-        if (Reads.compareIndices(array, m - 1, m, 0.0, true) <= 0)
-            return;
+        if (a >= m || m >= b) return;
+        if (Reads.compareIndices(array, m - 1, m, 0.0, true) <= 0) return;
         a = expSearch(array, a, m, array[m], true, false);
         b = expSearch(array, m, b, array[m - 1], false, true);
         int lenA = m - a, lenB = b - m;
-        if (lenA <= 16 || lenB <= 16) {
+        if (Math.min(lenA, lenB) <= 8) {
             if (m - a > b - m)
                 inPlaceMergeBW(array, a, m, b);
             else
@@ -249,21 +245,12 @@ public final class TernarySingularityQuickSort extends Sort {
     
     protected int findRun(int[] array, int a, int b, int mRun) {
         int i = a + 1;
-        boolean dir;
-        if (i < b)
-            dir = Reads.compareIndices(array, i - 1, i++, 0.5, true) <= 0;
-        else
-            dir = true;
-        if (dir)
-            while (i < b && Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0)
-                i++;
-        else {
-            while (i < b && Reads.compareIndices(array, i - 1, i, 0.5, true) > 0)
-                i++;
-            if (i - a < 4)
-                Writes.swap(array, a, i - 1, 1.0, true, false);
-            else
-                Writes.reversal(array, a, i - 1, 1.0, true, false);
+        if (i < b) {
+            if (Reads.compareIndices(array, i - 1, i++, 0.5, true) > 0) {
+                while (i < b && Reads.compareIndices(array, i - 1, i, 0.5, true) > 0) i++;
+                if (i - a < 4) Writes.swap(array, a, i - 1, 1.0, true, false);
+                else Writes.reversal(array, a, i - 1, 1.0, true, false);
+            } else while (i < b && Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0) i++;
         }
         Highlights.clearMark(2);
         while (i - a < mRun && i < b) {
@@ -280,26 +267,20 @@ public final class TernarySingularityQuickSort extends Sort {
 
     public void mergeSort(int[] array, int a, int b) {
         int i, j, k;
-        int mRun = b - a;
-        while (mRun >= 32)
-            mRun = (mRun - 1) / 2 + 1;
+        int mRun = 16;
         while (true) {
             i = findRun(array, a, b, mRun);
-            if (i >= b)
-                return;
+            if (i >= b) break;
             j = findRun(array, i, b, mRun);
             merge(array, a, i, j);
-            if (j >= b)
-                return;
+            if (j >= b) break;
             k = j;
             while (true) {
                 i = findRun(array, k, b, mRun);
-                if (i >= b)
-                    break;
+                if (i >= b) break;
                 j = findRun(array, i, b, mRun);
                 merge(array, k, i, j);
-                if (j >= b)
-                    break;
+                if (j >= b) break;
                 k = j;
             }
         }
@@ -333,10 +314,8 @@ public final class TernarySingularityQuickSort extends Sort {
                 return;
             }
             int pIdx = a + 1;
-            while(pIdx < b && Reads.compareIndices(array, pIdx - 1, pIdx, 0.125, true) <= 0)
-                pIdx++;
-            if (pIdx >= b)
-                return;
+            while(pIdx < b && Reads.compareIndices(array, pIdx - 1, pIdx, 0.125, true) <= 0) pIdx++;
+            if (pIdx >= b) return;
             int[] p = partition(array, a, b, array[pIdx - 1]);
             if (p[1] - p[0] == b - a)
                 return;
@@ -354,6 +333,14 @@ public final class TernarySingularityQuickSort extends Sort {
     }
     
     public void quickSort(int[] array, int a, int b) {
+        boolean sorted = true;
+        for (int i = a; i < b - 1; i++) {
+            if (Reads.compareIndices(array, i, i + 1, 0.5, true) > 0) {
+                sorted = false;
+                break;
+            }
+        }
+        if (sorted) return;
         depthlimit = (int) Math.min(Math.sqrt(b - a), 2 * log2(b - a));
         insertlimit = Math.max(depthlimit / 2, 16);
         replimit = Math.max(depthlimit / 4, 2);

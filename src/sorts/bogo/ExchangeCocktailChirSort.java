@@ -32,7 +32,7 @@ public final class ExchangeCocktailChirSort extends BogoSorting {
         this.setRadixSort(false);
         this.setUnreasonablySlow(true);
         this.setUnreasonableLimit(8192);
-        this.setBogoSort(false);
+        this.setBogoSort(true);
     }
     
     protected void bogoCompSwap(int[] array, int a, int b) {

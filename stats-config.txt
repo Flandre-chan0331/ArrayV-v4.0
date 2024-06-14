@@ -1,4 +1,4 @@
-FONT: Courier New * 25
+FONT: Consolas * 25
 # fps
 #
 sort

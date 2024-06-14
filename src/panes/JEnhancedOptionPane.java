@@ -25,6 +25,8 @@ final public class JEnhancedOptionPane extends JOptionPane {
      dialog.setVisible(true);
      dialog.dispose();
      final Object value = pane.getInputValue();
-     return (value == UNINITIALIZED_VALUE) ? null : (String) value;
+     final Object button = pane.getValue();
+
+     return button == options[0] ? (String) value : null;
  }
 }

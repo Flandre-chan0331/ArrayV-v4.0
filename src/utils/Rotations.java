@@ -235,4 +235,10 @@ public final class Rotations {
         }
         Writes.changeAllocAmount(-alloc);
     }
+    
+    public static void adaptable(int[] array, int pos, int lenA, int lenB, double pause, boolean mark, boolean auxwrite) {
+        if (lenA == 0 || lenB == 0) return;
+        if (lenA % lenB == 0 || lenB % lenA == 0) Rotations.holyGriesMills(array, pos, lenA, lenB, pause, mark, auxwrite);
+        else Rotations.cycleReverse(array, pos, lenA, lenB, pause, mark, auxwrite);
+    }
 }

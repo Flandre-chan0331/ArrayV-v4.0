@@ -14,9 +14,9 @@ public final class TriaSort extends BogoSorting {
         this.setComparisonBased(true);
         this.setBucketSort(false);
         this.setRadixSort(false);
-        this.setUnreasonablySlow(false);
-        this.setUnreasonableLimit(0);
-        this.setBogoSort(false);
+        this.setUnreasonablySlow(true);
+        this.setUnreasonableLimit(8192);
+        this.setBogoSort(true);
     }
     
     public void optiGnomeSort(int[] array, int a, int b) {
@@ -30,7 +30,7 @@ public final class TriaSort extends BogoSorting {
     }
     
     public void sort(int[] array, int a, int b) {
-        while (!isRangeSorted(array, a, b, false, true)) {
+        while (!isRangeSorted(array, a, b, false, false)) {
             int i1 = BogoSorting.randInt(a, b - 1);
             int i2 = BogoSorting.randInt(i1 + 1, b);
             optiGnomeSort(array, i1, i2 + 1);

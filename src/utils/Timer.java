@@ -133,6 +133,10 @@ final public class Timer {
     public Hashtable<String, Double> getCategoricalTimes() {
         return this.categoricalTimes;
     }
+    
+    public void resetCategoricalTimes() {
+        this.categoricalTimes.clear();
+    }
 
     void manualAddTime(long milliseconds) {
         this.realTimer += milliseconds;

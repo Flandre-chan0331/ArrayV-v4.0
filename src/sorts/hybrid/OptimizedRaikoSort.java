@@ -5,7 +5,7 @@ import sorts.templates.Sort;
 
 /*
 
-Coded for ArrayV by Ayako-chan
+Coded for ArrayV by Haruki
 in collaboration with aphitorite and Gaming32
 
 +---------------------------+
@@ -15,12 +15,12 @@ in collaboration with aphitorite and Gaming32
  */
 
 /**
- * @author Ayako-chan
+ * @author Haruki (a.k.a. Ayako-chan)
  * @author aphitorite
  * @author Gaming32
  *
  */
-public final class OptimizedRaikoSort extends Sort {
+public class OptimizedRaikoSort extends Sort {
 
     public OptimizedRaikoSort(ArrayVisualizer arrayVisualizer) {
         super(arrayVisualizer);
@@ -35,7 +35,7 @@ public final class OptimizedRaikoSort extends Sort {
         this.setUnreasonableLimit(0);
         this.setBogoSort(false);
     }
-    
+
     protected boolean keyLessThan(int[] src, int[] pa, int a, int b) {
         int cmp = Reads.compareValues(src[pa[a]], src[pa[b]]);
         return cmp < 0 || (cmp == 0 && Reads.compareOriginalValues(a, b) < 0);
@@ -71,11 +71,11 @@ public final class OptimizedRaikoSort extends Sort {
             Writes.write(pa, min, pa[min]+1, 0, false, true);
             if(pa[min] == pb[min])
                 this.siftDown(src, heap, pa, heap[--size], 0, size);
-            else 
+            else
                 this.siftDown(src, heap, pa, heap[0], 0, size);
         }
     }
-    
+
     protected void insertTo(int[] array, int a, int b) {
         Highlights.clearMark(2);
         int temp = array[a];
@@ -85,7 +85,7 @@ public final class OptimizedRaikoSort extends Sort {
         if (a != b)
             Writes.write(array, b, temp, 0.5, true, false);
     }
-    
+
     protected int expSearch(int[] array, int a, int b, int val) {
         int i = 1;
         while (b - i >= a && Reads.compareValues(val, array[b - i]) < 0)
@@ -103,29 +103,60 @@ public final class OptimizedRaikoSort extends Sort {
         return a1;
     }
 
-    protected int findRun(int[] array, int a, int b, int mRun) {
-        int i = a + 1;
-        boolean dir;
-        if (i < b) dir = Reads.compareIndices(array, i - 1, i++, 0.5, true) <= 0;
-        else dir = true;
-        while (i < b) {
-            if (dir ^ Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0)
-                break;
+    protected void stableSegmentReversal(int[] array, int start, int end) {
+        if (end - start < 3) Writes.swap(array, start, end, 0.75, true, false);
+        else Writes.reversal(array, start, end, 0.75, true, false);
+        int i = start;
+        int left;
+        int right;
+        while (i < end) {
+            left = i;
+            while (i < end && Reads.compareIndices(array, i, i + 1, 0.5, true) == 0) i++;
+            right = i;
+            if (left != right) {
+                if (right - left < 3) Writes.swap(array, left, right, 0.75, true, false);
+                else Writes.reversal(array, left, right, 0.75, true, false);
+            }
             i++;
         }
-        if (!dir)
-            if (i - a < 4)
-                Writes.swap(array, a, i - 1, 1.0, true, false);
-            else
-                Writes.reversal(array, a, i - 1, 1.0, true, false);
-        while (i - a < mRun && i < b) {
-            insertTo(array, i, expSearch(array, a, i, array[i]));
+    }
+
+    public int findRun(int[] array, int start, int end, int mRun) {
+        int i = start + 1;
+        if (i >= end) return i;
+        boolean lessunique = false;
+        boolean different = false;
+        int cmp = Reads.compareIndices(array, i - 1, i, 0.5, true);
+        while (cmp == 0 && i < end) {
+            lessunique = true;
+            i++;
+            if (i < end) cmp = Reads.compareIndices(array, i - 1, i, 0.5, true);
+        }
+        if (cmp > 0) {
+            while (cmp >= 0 && i < end) {
+                if (cmp == 0) lessunique = true;
+                else different = true;
+                i++;
+                if (i < end) cmp = Reads.compareIndices(array, i - 1, i, 0.5, true);
+            }
+            if (i - start > 1 && different) {
+                if (lessunique) stableSegmentReversal(array, start, i - 1);
+                else if (i - start < 4) Writes.swap(array, start, i - 1, 0.75, true, false);
+                else Writes.reversal(array, start, i - 1, 0.75, true, false);
+            }
+        } else {
+            while (cmp <= 0 && i < end) {
+                i++;
+                if (i < end) cmp = Reads.compareIndices(array, i - 1, i, 0.5, true);
+            }
+        }
+        while (i - start < mRun && i < end) {
+            insertTo(array, i, expSearch(array, start, i, array[i]));
             i++;
         }
-        Highlights.clearMark(2);
         return i;
     }
-    
+
     public void mergeSort(int[] array, int a, int b) {
         int len = b - a;
         if (len <= 32) {
@@ -140,6 +171,7 @@ public final class OptimizedRaikoSort extends Sort {
             Writes.write(runs, rf++, r, 0.5, false, true);
             r = findRun(array, r, b, mRun);
         }
+        Writes.write(runs, rf, b, 0.5, false, true);
         int[] buf = Writes.createExternalArray(len);
         int alloc = 0;
         if (rf > 1) {
@@ -148,9 +180,10 @@ public final class OptimizedRaikoSort extends Sort {
             int[] heap = new int[rf];
             alloc = 3 * rf;
             Writes.changeAllocAmount(alloc);
-            Writes.arraycopy(runs, 0, pa, 0, rf, 0, false, true);
-            Writes.arraycopy(pa, 1, pb, 0, rf - 1, 0, false, true);
-            Writes.write(pb, rf - 1, b, 0, false, true);
+            for (int i = 0; i < rf; i++) {
+                Writes.write(pa, i, runs[i], 0, false, true);
+                Writes.write(pb, i, runs[i + 1], 0, false, true);
+            }
             kWayMerge(array, buf, heap, pa, pb, rf, true);
             Highlights.clearAllMarks();
             Writes.arraycopy(buf, 0, array, a, len, 1, true, false);

@@ -232,7 +232,7 @@ final public class Writes {
             }
         }
     }
-
+    
     public void insert(int[] array, int pos, int to, double sleep, boolean mark, boolean auxwrite) {
         int temp = array[pos];
         if (to - pos > 0) {

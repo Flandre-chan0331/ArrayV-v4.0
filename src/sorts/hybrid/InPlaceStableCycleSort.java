@@ -9,7 +9,7 @@ import main.ArrayVisualizer;
  * 
 MIT License
 
-Copyright (c) 2021 aphitorite
+Copyright (c) 2021-2024 aphitorite
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ final public class InPlaceStableCycleSort extends Sort {
 	public InPlaceStableCycleSort(ArrayVisualizer arrayVisualizer) {
 		super(arrayVisualizer);
 		
-		this.setSortListName("In-Place Stable Cycle");
+		this.setSortListName("In-Place Stable Cycle (IPSC)");
 		this.setRunAllSortsName("In-Place Stable Cycle Sort");
 		this.setRunSortName("In-Place Stable Cyclesort");
 		this.setCategory("Hybrid Sorts");
@@ -120,6 +120,12 @@ final public class InPlaceStableCycleSort extends Sort {
 			}
 		}
 	}
+	
+	////////////////////
+	//                //
+	//  PARTITIONING  //
+	//                //
+	////////////////////
 	
 	private void resetBits(int[] array, int pa, int pb, int bLen) {
 		pa--; pb--;
@@ -322,9 +328,15 @@ final public class InPlaceStableCycleSort extends Sort {
 		return false;
 	}
 	
+	/////////////////////////
+	//                     //
+	//  STABLE CYCLE SORT  //
+	//                     //
+	/////////////////////////
+	
 	//@param cmp - comp val that means bit flipped
 	//items equal to the median automatically count as bit flipped
-	private int stableCycleDest(int[] array, int a1, int b1, int b, int p, int piv, int cmp) {
+	private int stableCycleDest(int[] array, int a, int a1, int b1, int b, int p, int piv, int cmp) {
 		int d = a1, e = 0;
 		
 		for(int i = a1+1; i < b; i++) {
@@ -333,7 +345,7 @@ final public class InPlaceStableCycleSort extends Sort {
 			int pCmp = Reads.compareValues(array[i], piv);
 			boolean bit = pCmp == cmp || pCmp == 0;
 			
-			int val  = bit ? array[p+i] : array[i];
+			int val  = bit ? array[p+i-a] : array[i];
 			int vCmp = Reads.compareValues(val, array[a1]);
 			
 			if(vCmp == -1) d++;
@@ -355,8 +367,8 @@ final public class InPlaceStableCycleSort extends Sort {
 		
 		return d;
 	}
-	private void stableCycle(int[] array, int a1, int b, int p, int piv, int cmp) {
-		for(int i = a1; i < b; i++) {
+	private void stableCycle(int[] array, int a, int b, int p, int piv, int cmp) {
+		for(int i = a; i < b; i++) {
 			int pCmp = Reads.compareValues(array[i], piv);
 			boolean bit = pCmp == cmp || pCmp == 0;
 			
@@ -365,69 +377,45 @@ final public class InPlaceStableCycleSort extends Sort {
 				int j = i;
 				
 				for(;;) {
-					int k = this.stableCycleDest(array, i, j, b, p, piv, cmp);
+					int k = this.stableCycleDest(array, a, i, j, b, p, piv, cmp);
 					
 					if(k == i) break;
 					
 					int t = array[i];
 					Writes.write(array, i, array[k], 0.01, true, false);
-					Writes.write(array, k, array[p+k], 0.01, true, false);
-					Writes.write(array, p+k, t, 0.01, true, false);
+					Writes.write(array, k, array[p+k-a], 0.01, true, false);
+					Writes.write(array, p+k-a, t, 0.01, true, false);
 					
 					j = k;
 				}
-				Writes.swap(array, i, p+i, 0.02, true, false);
+				Writes.swap(array, i, p+i-a, 0.02, true, false);
 			}
 		}
 	}
 	
 	@Override
 	public void runSort(int[] array, int length, int bucketCount) {
+		int a = 0, b = length;
+		
 		if(length <= 32) {
 			BinaryInsertionSort smallSort = new BinaryInsertionSort(this.arrayVisualizer);
-			smallSort.customBinaryInsert(array, 0, length, 0.25);
+			smallSort.customBinaryInsert(array, a, b, 0.25);
 			return;
 		}
 		
-		int piv = this.selectMedian(array, 0, length);
-		if(this.partition(array, 0, length, piv)) return;
+		int piv = this.selectMedian(array, a, b);
+		if(this.partition(array, a, b, piv)) return;
 		
-		//find equal elements zone to be excluded from sorting
+		int m2 = this.rightBinSearch(array, a, b, piv);
+		int m1 = this.leftBinSearch(array, a, m2, piv);
 		
-		int n = length/2, p = (length+1)/2;
-		while(Reads.compareIndices(array, n-1, p, 1, true) == 0) {
-			n--; p++;
-		}
-		Highlights.clearMark(2);
+		int h1 = m1-a, h2 = b-m2, hMax = Math.max(h1,h2);
+		int a1 = a+hMax, b1 = b-hMax;
 		
-		//depending on these comparisons we have to manage block E of equal elements on one partition
+		this.stableCycle(array, a, a+h1, b1, piv, 1);
+		this.multiSwap(array, a+h1, b1+h1, hMax-h1);
 		
-		if(Reads.compareValues(array[p], piv) == 0) { 
-			//[      A      ][ = ][ E ][   B    ]
-			int p1 = p, bSize = 1;
-			while(++p1 < length && Reads.compareIndexValue(array, p1, piv, 1, true) == 0)
-				bSize++;
-			
-			this.stableCycle(array, 0, n, p, piv, 1);
-			Highlights.clearAllMarks();
-			this.multiSwap(array, 0, p, bSize);
-			this.stableCycle(array, bSize, n, p, piv, -1);
-		}
-		else if(Reads.compareValues(array[n-1], piv) == 0) {
-			//[   A    ][ E ][ = ][      B      ]
-			int n1 = n, bSize = 1;
-			while(--n1 > 0 && Reads.compareIndexValue(array, n1-1, piv, 1, true) == 0)
-				bSize++;
-			
-			this.stableCycle(array, 0, n1, p, piv, 1);
-			Highlights.clearAllMarks();
-			this.multiSwap(array, n1, length-bSize, bSize);
-			this.stableCycle(array, 0, n, p, piv, -1);
-		}
-		else {
-			//[      A      ][ = ][      B      ] (E does not exist)
-			this.stableCycle(array, 0, n, p, piv, 1);
-			this.stableCycle(array, 0, n, p, piv, -1);
-		}
+		this.multiSwap(array, a, b1, hMax-h2);
+		this.stableCycle(array, a1-h2, a1, b-h2, piv, -1);
 	}
 }

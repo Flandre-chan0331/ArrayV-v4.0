@@ -249,6 +249,7 @@ public final class ArrayVisualizer {
 
     private volatile int updateVisualsForced;
     public  volatile boolean benchmarking;
+    public  volatile static boolean doRSS = false;
 
     public static int MAX_LENGTH_POWER = 15;
 
@@ -1430,7 +1431,7 @@ public final class ArrayVisualizer {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         this.window.setSize((int) (screenSize.getWidth() / 2), (int) (screenSize.getHeight() / 2));
 
-        StringBuilder title = new StringBuilder("w0rthy's Array Visualizer - ");
+        StringBuilder title = new StringBuilder("w0rthy's Array Visualizer (Flanlaina's Personal Mod) - ");
         title.append(this.ComparisonSorts.length + this.DistributionSorts.length);
         title.append(" Sorts, 15 Visual Styles, and Infinite Inputs to Sort");
         String versionSha = buildInfo.getProperty("commitId");
@@ -1479,8 +1480,10 @@ public final class ArrayVisualizer {
     public static void main(String[] args) {
         System.setProperty("sun.java2d.d3d", "false");
         if (args.length > 0) {
-            ArrayVisualizer.MAX_LENGTH_POWER = Integer.parseInt(args[0]);
+            if (args[0].contains("RSS")) doRSS = true;
+            else ArrayVisualizer.MAX_LENGTH_POWER = Integer.parseInt(args[0]);
         }
+        if (args.length > 1) if (args[1].contains("RSS")) doRSS = true;
         new ArrayVisualizer();
     }
 }

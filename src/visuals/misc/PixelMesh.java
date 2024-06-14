@@ -1,6 +1,7 @@
 package visuals.misc;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
 import main.ArrayVisualizer;
 import utils.Highlights;
@@ -8,7 +9,7 @@ import utils.Renderer;
 import visuals.Visual;
 
 /*
- *
+ * 
 MIT License
 
 Copyright (c) 2020-2021 ArrayV 4.0 Team
@@ -34,46 +35,70 @@ SOFTWARE.
  */
 
 final public class PixelMesh extends Visual {
-    public PixelMesh(ArrayVisualizer ArrayVisualizer) {
-        super(ArrayVisualizer);
-    }
-
-    @Override
-    public void drawVisual(int[] array, ArrayVisualizer ArrayVisualizer, Renderer Renderer, Highlights Highlights) {
-        if (Renderer.auxActive) return;
-
-        int width = ArrayVisualizer.windowWidth()-40;
-        int height = ArrayVisualizer.windowHeight()-50;
-        int length = ArrayVisualizer.getCurrentLength();
-
-        int sqrt = (int)Math.ceil(Math.sqrt(length));
-        int square = sqrt*sqrt;
-        double scale = (double)length / square;
-
-        int x = 0;
-        int y = 0;
-        double xStep = (double)width / sqrt;
-        double yStep = (double)height / sqrt;
-
-        for (int i = 0; i < square; i++) {
-            int idx = (int)(i * scale);
-
-            if (Highlights.fancyFinishActive() && idx < Highlights.getFancyFinishPosition())
-                this.mainRender.setColor(Color.GREEN);
-
-            else if (Highlights.containsPosition(idx)) {
-                if (ArrayVisualizer.analysisEnabled()) this.mainRender.setColor(Color.LIGHT_GRAY);
-                else                                   this.mainRender.setColor(Color.WHITE);
-            }
-            else this.mainRender.setColor(getIntColor(array[idx], length));
-
-            this.mainRender.fillRect(20 + (int)(x * xStep), 40 + (int)(y * yStep),
-                                     (int)((x+1)*xStep - x*xStep)+1, (int)((y+1)*yStep - y*yStep)+1);
-
-            if (++x == sqrt) {
-                x = 0;
-                y++;
-            }
-        }
-    }
+	public PixelMesh(ArrayVisualizer ArrayVisualizer) {
+		super(ArrayVisualizer);
+	}
+	
+	private Color getGray(int t, int n) {
+		int c = (int)(255 * (double)Math.max(0, Math.min(t, n))/n);
+		return new Color(c, c, c);
+	}
+	
+	private int multx2i(int a, int b) {
+		return b<64?(a*b)/127:b<128?(a*(b+1))/127:255-(((255-a)*(256-b))/128);
+	}
+	private Color multx2(Color a, Color b) {
+		return new Color(multx2i(a.getRed(), b.getRed()), multx2i(a.getGreen(), b.getGreen()), multx2i(a.getBlue(), b.getBlue()));
+	}
+	
+	private static boolean mixedMesh = true;
+	
+	public void drawVisual(int[] array, ArrayVisualizer ArrayVisualizer, Renderer Renderer, Highlights Highlights) {
+		if(Renderer.auxActive) return;
+		
+		int width = ArrayVisualizer.windowWidth();
+		int height = ArrayVisualizer.windowHeight()-50;
+		int length = ArrayVisualizer.getCurrentLength();
+		
+		int sqrt = (int)Math.ceil(Math.sqrt(length));
+		int square = sqrt*sqrt;
+		double scale = (double)length / square;
+		
+		Color currColor;
+		int imgWidth = Math.min(sqrt, width), imgHeight = Math.min(sqrt, height);
+		BufferedImage img = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
+		
+		double xScale = (double)sqrt/imgWidth;
+		double yScale = (double)sqrt/imgHeight;
+		
+		for(int y = 0; y < imgHeight; y++) {
+			int yi = (int)(y * yScale);
+			
+			for(int x = 0; x < imgWidth; x++) {
+				int xi  = (int)(x * xScale);
+				int idx = (int)((yi*sqrt + xi) * scale);
+				
+				if(Highlights.fancyFinishActive() && idx < Highlights.getFancyFinishPosition())
+					currColor = Color.GREEN;
+				
+				else if(ArrayVisualizer.colorEnabled()) {
+					if(Highlights.containsPosition(idx)) {
+						if(ArrayVisualizer.analysisEnabled()) currColor = Color.LIGHT_GRAY;
+						else								  currColor = Color.WHITE;
+					}
+					else currColor = getIntColor(array[idx], length);
+				} 
+				else {
+					if(Highlights.containsPosition(idx)) {
+						if(ArrayVisualizer.analysisEnabled()) currColor = Color.BLUE;
+						else								  currColor = Color.RED;
+					}
+					else currColor = getGray(array[idx], length);
+				}
+				
+				img.setRGB(x, y, currColor.getRGB());
+			}
+		}
+		this.mainRender.drawImage(img, 0, 40, width, height+40, 0, 0, imgWidth, imgHeight, null);
+	}
 }

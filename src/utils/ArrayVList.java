@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import main.ArrayVisualizer;
 
 public class ArrayVList extends AbstractList<Integer> implements RandomAccess, Cloneable, java.io.Serializable {
+    private static final long serialVersionUID = 1L;
     final static int DEFAULT_CAPACITY = 128;
     final static double DEFAULT_GROW_FACTOR = 2;
 

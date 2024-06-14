@@ -126,7 +126,7 @@ final public class ArrayManager {
     }
 
     /**
-     * @deprecated This method is deprecatated. Please use {@link #setShuffleSingle(Shuffles)} or {@link #setShuffle(ShuffleGraph)} instead.
+     * @deprecated This method is deprecated. Please use {@link #setShuffleSingle(Shuffles)} or {@link #setShuffle(ShuffleGraph)} instead.
      * @see #setShuffleSingle(Shuffles)
      * @see #setShuffle(ShuffleGraph)
      */
@@ -158,11 +158,14 @@ final public class ArrayManager {
     public Distributions getDistribution() {
         return this.distribution;
     }
-    public void setDistribution(Distributions choice) {
-        this.distribution = choice;
-        this.distribution.selectDistribution(ArrayVisualizer.getArray(), ArrayVisualizer);
-        if (!ArrayVisualizer.isActive())
-            this.initializeArray(ArrayVisualizer.getArray());
+    public boolean setDistribution(Distributions choice) {
+        if (choice.selectDistribution(ArrayVisualizer.getArray(), ArrayVisualizer)) {
+            this.distribution = choice;
+            if (!ArrayVisualizer.isActive())
+                this.initializeArray(ArrayVisualizer.getArray());
+            return true;
+        }
+        return false;
     }
 
     public boolean containsShuffle(Shuffles shuffle) {
@@ -265,5 +268,6 @@ final public class ArrayManager {
         }
 
         ArrayVisualizer.resetAllStatistics();
+        ArrayVisualizer.getTimer().resetCategoricalTimes();
     }
 }

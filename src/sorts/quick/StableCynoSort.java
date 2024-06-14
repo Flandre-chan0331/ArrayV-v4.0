@@ -319,7 +319,7 @@ public final class StableCynoSort extends Sort {
         return 1;
     }
     
-    protected int[] partTernary(int[] array, int[] buf, int a, int b, int piv) {
+    protected int[] partitionSP(int[] array, int[] buf, int a, int b, int piv) {
         Highlights.clearMark(2);
         int[] ptrs = new int[4];
         for (int i = a; i < b; i++) {
@@ -338,7 +338,7 @@ public final class StableCynoSort extends Sort {
         return new int[] {ptrs[1], ptrs[2]};
     }
     
-    int pivCmp(int v, int piv1, int piv2) {
+    int pivCmpDP(int v, int piv1, int piv2) {
         int cmp = Reads.compareValues(v, piv1);
         if (cmp < 0) return 0; // v < piv1
         if (cmp == 0) return 1; // v == piv1
@@ -349,19 +349,19 @@ public final class StableCynoSort extends Sort {
         return 4; // v > piv2
     }
     
-    protected int[] partition(int[] array, int[] buf, int a, int b, int piv1, int piv2) {
+    protected int[] partitionDP(int[] array, int[] buf, int a, int b, int piv1, int piv2) {
         Highlights.clearMark(2);
         int[] ptrs = new int[6];
         for (int i = a; i < b; i++) {
             Highlights.markArray(1, i);
             Delays.sleep(0.5);
             Writes.write(buf, i - a, array[i], 0.5, false, true);
-            int c = pivCmp(array[i], piv1, piv2);
+            int c = pivCmpDP(array[i], piv1, piv2);
             ptrs[c]++;
         }
         for (int i = 1; i < ptrs.length; i++) ptrs[i] += ptrs[i-1];
         for (int i = b - a - 1; i >= 0; i--) {
-            int c = pivCmp(buf[i], piv1, piv2);
+            int c = pivCmpDP(buf[i], piv1, piv2);
             Writes.write(array, a + --ptrs[c], buf[i], 1, true, false);
         }
         for (int i = 0; i < ptrs.length; i++) ptrs[i] += a;
@@ -388,7 +388,7 @@ public final class StableCynoSort extends Sort {
             } else pr = medOf15(array, a, b);
             int piv1 = array[pr[0]], piv2 = array[pr[1]];
             if (Reads.compareValues(piv1, piv2) == 0) {
-                pr = partTernary(array, buf, a, b, piv1);
+                pr = partitionSP(array, buf, a, b, piv1);
                 int lLen = pr[0] - a, rLen = b - pr[1], eqLen = pr[1] - pr[0];
                 if (eqLen == b - a) continue;
                 if (rLen == 0) {
@@ -402,8 +402,9 @@ public final class StableCynoSort extends Sort {
                 bad = rLen / 8 > lLen || lLen / 8 > rLen;
                 consumePartition(array, queue, a, pr[0], bad);
                 consumePartition(array, queue, pr[1], b, bad);
+                continue;
             }
-            pr = partition(array, buf, a, b, piv1, piv2);
+            pr = partitionDP(array, buf, a, b, piv1, piv2);
             int lLen = pr[0] - a, mLen = pr[2] - pr[1], rLen = b - pr[3];
             if (lLen > mLen) {
                 if (lLen > rLen) // l > m, r

@@ -29,7 +29,7 @@ public final class ElementGuessSort extends BogoSorting {
         this.setBucketSort(false);
         this.setRadixSort(false);
         this.setUnreasonablySlow(true);
-        this.setUnreasonableLimit(7);
+        this.setUnreasonableLimit(8);
         this.setBogoSort(false);
     }
     

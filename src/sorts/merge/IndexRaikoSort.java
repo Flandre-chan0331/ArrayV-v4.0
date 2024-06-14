@@ -5,7 +5,7 @@ import sorts.templates.Sort;
 
 /*
 
-Coded for ArrayV by Ayako-chan
+Coded for ArrayV by Haruki
 in collaboration with aphitorite and Gaming32
 
 +---------------------------+
@@ -15,12 +15,12 @@ in collaboration with aphitorite and Gaming32
  */
 
 /**
- * @author Ayako-chan
+ * @author Haruki (Ayako-chan)
  * @author aphitorite
  * @author Gaming32
  *
  */
-public final class IndexRaikoSort extends Sort {
+public class IndexRaikoSort extends Sort {
 
     public IndexRaikoSort(ArrayVisualizer arrayVisualizer) {
         super(arrayVisualizer);
@@ -78,19 +78,16 @@ public final class IndexRaikoSort extends Sort {
     
     protected int findRun(int[] array, int a, int b) {
         int i = a + 1;
-        boolean dir;
-        if (i < b) dir = Reads.compareIndices(array, i - 1, i++, 0.5, true) <= 0;
-        else dir = true;
+        if (i >= b) return i;
+        boolean dir = Reads.compareIndices(array, i - 1, i++, 0.5, true) <= 0;
         while (i < b) {
-            if (dir ^ Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0)
-                break;
+            if (dir ^ Reads.compareIndices(array, i - 1, i, 0.5, true) <= 0) break;
             i++;
         }
-        if (!dir)
-            if (i - a < 4)
-                Writes.swap(array, a, i - 1, 1.0, true, false);
-            else
-                Writes.reversal(array, a, i - 1, 1.0, true, false);
+        if (!dir) {
+            if (i - a < 4) Writes.swap(array, a, i - 1, 1.0, true, false);
+            else Writes.reversal(array, a, i - 1, 1.0, true, false);
+        }
         Highlights.clearMark(2);
         return i;
     }
@@ -123,6 +120,7 @@ public final class IndexRaikoSort extends Sort {
             Writes.write(runs, rf++, r, 0.5, false, true);
             r = findRun(array, r, b);
         }
+        Writes.write(runs, rf, b, 0.5, false, true);
         int[] idx = Writes.createExternalArray(len);
         int alloc = 0;
         if (rf > 1) {
@@ -131,9 +129,10 @@ public final class IndexRaikoSort extends Sort {
             int[] heap = new int[rf];
             alloc = 3 * rf;
             Writes.changeAllocAmount(alloc);
-            Writes.arraycopy(runs, 0, pa, 0, rf, 0, false, true);
-            Writes.arraycopy(pa, 1, pb, 0, rf - 1, 0, false, true);
-            Writes.write(pb, rf - 1, b, 0, false, true);
+            for (int i = 0; i < rf; i++) {
+                Writes.write(pa, i, runs[i], 0, false, true);
+                Writes.write(pb, i, runs[i + 1], 0, false, true);
+            }
             kWayMerge(array, idx, heap, pa, pb, rf, a);
             Highlights.clearAllMarks();
             indexSort(array, idx, a, b);
